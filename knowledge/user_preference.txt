@@ -1,0 +1,38 @@
+# PERSONAL INFORMATION
+Name: John Doe
+Profession: AI Engineer
+Company: TechInnovate AI (Senior Engineer)
+Location: San Francisco, California
+Timezone: Pacific Time (UTC-8/UTC-7 during DST)
+
+# INTERESTS & EXPERTISE
+Primary Interests: AI Agents, Large Language Models, Reinforcement Learning
+Secondary Interests: Computer Vision, Robotics, Edge Computing
+Programming Languages: Python, TypeScript, Rust
+Frameworks: TensorFlow, PyTorch, LangChain, CrewAI
+
+# COMMUNICATION PREFERENCES
+Preferred Name: John
+Email Style: Professional but conversational
+Response Priority:
+  - High: Client requests, team questions, project deadlines
+  - Medium: Industry connections, networking, conference invitations
+  - Low: Newsletters, marketing emails, unsolicited sales
+
+# AVAILABILITY
+Working Hours: Monday-Friday, 9:00 AM - 6:00 PM PT
+Meeting Preferences: Mornings for important discussions, afternoons for routine check-ins
+Regular Commitments: Team standup (Daily 10:00 AM), Research review (Thursdays 2:00 PM)
+
+# EMAIL ORGANIZATION
+Label Preferences:
+  - Work: Professional communications
+  - Projects: Ongoing project discussions
+  - Learning: Educational content and courses
+  - Networking: Industry connections and events
+  - Personal: Non-work related emails
+
+# RESPONSE TEMPLATES
+Meeting Request: "I'm available [suggest 2-3 time slots]. Would any of these work for you? Alternatively, you can book directly on my calendar: [calendar_link]"
+Follow-up Timing: "I'll follow up on this by [day/date], once I've had a chance to review the details."
+Delay Apology: "I apologize for the delayed response. I've been focused on [current project/general reason]."

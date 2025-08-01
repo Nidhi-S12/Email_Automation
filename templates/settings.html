@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Gmail AI Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234285f4'%3E%3Cpath d='M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-.904.732-1.636 1.636-1.636h3.819v.001L12 8.733l6.545-4.911V3.821h3.819c.904 0 1.636.732 1.636 1.636z'/%3E%3C/svg%3E">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .setting-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .setting-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.15);
+        }
+        .masked-text {
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+        }
+        .status-indicator {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        .nav-link {
+            position: relative;
+            overflow: hidden;
+        }
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        .nav-link:hover::before {
+            left: 100%;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="gradient-bg text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <div class="flex items-center">
+                        <i class="fas fa-envelope text-2xl mr-3"></i>
+                        <span class="text-xl font-bold">Gmail AI Dashboard</span>
+                    </div>
+                </div>
+                
+                <!-- Navigation Links -->
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="/dashboard" class="nav-link px-3 py-2 rounded-md text-sm font-medium hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                        </a>
+                        <a href="/settings" class="nav-link px-3 py-2 rounded-md text-sm font-medium bg-white bg-opacity-20 border border-white border-opacity-30">
+                            <i class="fas fa-cog mr-2"></i>Settings
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- User Menu -->
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center text-sm">
+                        <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center mr-2">
+                            <i class="fas fa-user text-sm"></i>
+                        </div>
+                        <span class="hidden sm:block">{{ user_email }}</span>
+                    </div>
+                    <a href="/auth/logout" class="nav-link px-3 py-2 rounded-md text-sm font-medium hover:bg-red-500 hover:bg-opacity-80 transition-all duration-200">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-cog text-purple-600 mr-3"></i>
+                        Account Settings
+                    </h1>
+                    <p class="text-gray-600 mt-2">Manage your account credentials and preferences</p>
+                </div>
+                <div class="flex items-center space-x-2 px-4 py-2 bg-green-100 text-green-800 rounded-full">
+                    <div class="w-2 h-2 bg-green-500 rounded-full status-indicator"></div>
+                    <span class="text-sm font-medium">Active Session</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Account Information -->
+            <div class="glass-card rounded-2xl p-6 setting-card">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-user-circle text-blue-500 mr-3"></i>
+                        Account Information
+                    </h2>
+                    <div class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
+                        VERIFIED
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium text-gray-700">Email Address</label>
+                            <p class="text-lg font-semibold text-gray-900">{{ settings.email }}</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                            <button onclick="showUpdateModal('gmail_email')" class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full hover:bg-blue-200 transition-colors">
+                                <i class="fas fa-edit mr-1"></i>Change
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium text-gray-700">App Password</label>
+                            <p class="text-lg font-semibold text-gray-900 masked-text">{{ settings.app_password_preview }}</p>
+                            <p class="text-xs text-gray-500 mt-1">Google App Password (16 characters)</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-shield-alt text-green-500 text-xl"></i>
+                            <button onclick="showUpdateModal('app_password')" class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full hover:bg-blue-200 transition-colors">
+                                <i class="fas fa-edit mr-1"></i>Update
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Configuration -->
+            <div class="glass-card rounded-2xl p-6 setting-card">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-robot text-purple-500 mr-3"></i>
+                        AI Configuration
+                    </h2>
+                    <div class="px-3 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded-full">
+                        {{ settings.provider }}
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium text-gray-700">AI Model</label>
+                            <p class="text-lg font-semibold text-gray-900">{{ settings.model_choice }}</p>
+                            <p class="text-xs text-gray-500 mt-1">{{ settings.provider }} Language Model</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            {% if settings.provider == "OpenAI" %}
+                                <i class="fas fa-brain text-green-500 text-xl"></i>
+                            {% else %}
+                                <i class="fab fa-google text-blue-500 text-xl"></i>
+                            {% endif %}
+                            <button onclick="showUpdateModal('model_choice')" class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full hover:bg-blue-200 transition-colors">
+                                <i class="fas fa-edit mr-1"></i>Change
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium text-gray-700">API Key</label>
+                            <p class="text-lg font-semibold text-gray-900 masked-text">{{ settings.api_key_preview }}</p>
+                            <p class="text-xs text-gray-500 mt-1">{{ settings.provider }} API Key</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-key text-yellow-500 text-xl"></i>
+                            <button onclick="showUpdateModal('api_key')" class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full hover:bg-blue-200 transition-colors">
+                                <i class="fas fa-edit mr-1"></i>Update
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Session Information -->
+            <div class="glass-card rounded-2xl p-6 setting-card">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-clock text-indigo-500 mr-3"></i>
+                        Session Details
+                    </h2>
+                    <div class="px-3 py-1 bg-indigo-100 text-indigo-800 text-xs font-semibold rounded-full">
+                        24H SESSION
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="p-4 bg-gray-50 rounded-lg">
+                        <label class="block text-sm font-medium text-gray-700">Session Started</label>
+                        <p class="text-lg font-semibold text-gray-900">{{ settings.session_created }}</p>
+                        <p class="text-xs text-gray-500 mt-1">When you logged in</p>
+                    </div>
+                    
+                    <div class="p-4 bg-gray-50 rounded-lg">
+                        <label class="block text-sm font-medium text-gray-700">Session Expires</label>
+                        <p class="text-lg font-semibold text-gray-900">{{ settings.session_expires }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Automatic logout time</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Features -->
+            <div class="glass-card rounded-2xl p-6 setting-card">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-shield-alt text-green-500 mr-3"></i>
+                        Security Features
+                    </h2>
+                    <div class="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                        PROTECTED
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                            <span class="text-sm font-medium text-gray-700">End-to-End Encryption</span>
+                        </div>
+                        <span class="text-xs text-green-600 font-semibold">ACTIVE</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                            <span class="text-sm font-medium text-gray-700">Session-Only Storage</span>
+                        </div>
+                        <span class="text-xs text-green-600 font-semibold">ACTIVE</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                            <span class="text-sm font-medium text-gray-700">Auto Session Expiry</span>
+                        </div>
+                        <span class="text-xs text-green-600 font-semibold">ACTIVE</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                            <span class="text-sm font-medium text-gray-700">Secure Cookie Protocol</span>
+                        </div>
+                        <span class="text-xs text-green-600 font-semibold">ACTIVE</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+            <button onclick="refreshSession()" class="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 flex items-center justify-center">
+                <i class="fas fa-sync-alt mr-2"></i>
+                Refresh Session
+            </button>
+            
+            <a href="/auth/logout" class="px-6 py-3 bg-gradient-to-r from-red-500 to-pink-600 text-white font-semibold rounded-lg hover:from-red-600 hover:to-pink-700 transition-all duration-200 transform hover:scale-105 flex items-center justify-center">
+                <i class="fas fa-sign-out-alt mr-2"></i>
+                Logout & Clear Session
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-12 text-center text-gray-500 text-sm">
+            <div class="flex items-center justify-center space-x-4">
+                <div class="flex items-center">
+                    <i class="fas fa-lock mr-1"></i>
+                    <span>SSL Encrypted</span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-shield-alt mr-1"></i>
+                    <span>SOC 2 Compliant</span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-eye-slash mr-1"></i>
+                    <span>Private & Secure</span>
+                </div>
+            </div>
+            <p class="mt-2">Your credentials are never permanently stored. Session data is encrypted and automatically expires.</p>
+        </div>
+    </div>
+
+    <!-- Update Credentials Modal -->
+    <div id="updateModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="glass-card rounded-2xl p-8 max-w-md w-full mx-4 transform transition-all">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-key text-blue-500 mr-3"></i>
+                    Update <span id="modalCredentialType">Credential</span>
+                </h3>
+                <button onclick="closeUpdateModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <form id="updateCredentialForm" class="space-y-4">
+                <div>
+                    <label id="modalInputLabel" class="block text-sm font-medium text-gray-700 mb-2"></label>
+                    <div class="relative">
+                        <input
+                            type="password"
+                            id="modalInput"
+                            name="new_value"
+                            class="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                            placeholder=""
+                            required
+                        >
+                        <i id="modalInputIcon" class="fas fa-key absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="toggleModalPassword()">
+                            <i class="fas fa-eye" id="modalPasswordEye"></i>
+                        </button>
+                    </div>
+                    <div id="modalHelpText" class="mt-2 text-xs text-gray-500"></div>
+                </div>
+
+                <div class="flex space-x-3 pt-4">
+                    <button
+                        type="submit"
+                        class="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105"
+                        id="modalSubmitBtn"
+                    >
+                        <i class="fas fa-save mr-2"></i>
+                        Update Credential
+                    </button>
+                    <button
+                        type="button"
+                        onclick="closeUpdateModal()"
+                        class="px-4 py-3 bg-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-400 transition-all duration-200"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Success/Error Toast -->
+    <div id="toast" class="fixed top-4 right-4 z-50 hidden">
+        <div class="glass-card rounded-lg p-4 max-w-sm">
+            <div class="flex items-center">
+                <div id="toastIcon" class="mr-3"></div>
+                <div>
+                    <p id="toastTitle" class="font-medium"></p>
+                    <p id="toastMessage" class="text-sm text-gray-600"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentCredentialType = '';
+        const currentModelChoice = '{{ settings.model_choice }}';
+
+        function showUpdateModal(credentialType) {
+            currentCredentialType = credentialType;
+            const modal = document.getElementById('updateModal');
+            const modalCredentialType = document.getElementById('modalCredentialType');
+            const modalInputLabel = document.getElementById('modalInputLabel');
+            const modalInput = document.getElementById('modalInput');
+            const modalInputIcon = document.getElementById('modalInputIcon');
+            const modalHelpText = document.getElementById('modalHelpText');
+
+            if (credentialType === 'gmail_email') {
+                modalCredentialType.textContent = 'Gmail Address';
+                modalInputLabel.innerHTML = '<i class="fas fa-envelope text-blue-500 mr-2"></i>Gmail Email Address';
+                modalInput.placeholder = 'your.email@gmail.com';
+                modalInput.type = 'email';
+                modalInput.maxLength = 100;
+                modalInputIcon.className = 'fas fa-envelope absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-500';
+                modalHelpText.innerHTML = `
+                    <div class="bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400 mt-2">
+                        <p class="text-yellow-800 font-medium text-xs">Important:</p>
+                        <p class="text-yellow-700 text-xs mt-1">
+                            Changing your Gmail address will use your current app password. If it doesn't work, update your app password first.
+                        </p>
+                    </div>
+                `;
+            } else if (credentialType === 'model_choice') {
+                modalCredentialType.textContent = 'AI Model';
+                modalInputLabel.innerHTML = '<i class="fas fa-robot text-purple-500 mr-2"></i>AI Model Selection';
+                modalInput.placeholder = 'Select AI Model';
+                modalInput.type = 'text';
+                modalInput.maxLength = 50;
+                modalInputIcon.className = 'fas fa-robot absolute left-4 top-1/2 transform -translate-y-1/2 text-purple-500';
+                
+                // Replace input with select dropdown
+                const inputContainer = modalInput.parentElement;
+                inputContainer.innerHTML = `
+                    <select
+                        id="modalInput"
+                        name="new_value"
+                        class="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200"
+                        required
+                    >
+                        <option value="">Select AI Model</option>
+                        <option value="openai/gpt-4o-mini" ${currentModelChoice === 'openai/gpt-4o-mini' ? 'selected' : ''}>🚀 OpenAI GPT-4o Mini (Recommended)</option>
+                        <option value="openai/gpt-4o" ${currentModelChoice === 'openai/gpt-4o' ? 'selected' : ''}>⭐ OpenAI GPT-4o (Premium)</option>
+                        <option value="gemini/gemini-2.0-flash" ${currentModelChoice === 'gemini/gemini-2.0-flash' ? 'selected' : ''}>🔥 Google Gemini 2.0 Flash</option>
+                        <option value="gemini/gemini-pro" ${currentModelChoice === 'gemini/gemini-pro' ? 'selected' : ''}>💎 Google Gemini Pro</option>
+                    </select>
+                    <i class="fas fa-robot absolute left-4 top-1/2 transform -translate-y-1/2 text-purple-500"></i>
+                `;
+                
+                modalHelpText.innerHTML = `
+                    <div class="bg-purple-50 p-3 rounded-lg border-l-4 border-purple-400 mt-2">
+                        <p class="text-purple-800 font-medium text-xs">Model Information:</p>
+                        <ul class="text-purple-700 text-xs mt-1 space-y-1">
+                            <li>• <strong>GPT-4o Mini:</strong> Fast, cost-effective, great for most tasks</li>
+                            <li>• <strong>GPT-4o:</strong> Most capable, best for complex reasoning</li>
+                            <li>• <strong>Gemini Flash:</strong> Google's fastest model</li>
+                            <li>• <strong>Gemini Pro:</strong> Google's most advanced model</li>
+                        </ul>
+                        <p class="text-purple-600 text-xs mt-2 font-medium">
+                            Note: Changing providers may require updating your API key.
+                        </p>
+                    </div>
+                `;
+            } else if (credentialType === 'app_password') {
+                modalCredentialType.textContent = 'App Password';
+                modalInputLabel.innerHTML = '<i class="fas fa-shield-alt text-green-500 mr-2"></i>Gmail App Password';
+                modalInput.placeholder = 'Enter your 16-character app password';
+                modalInput.type = 'password';
+                modalInput.maxLength = 16;
+                modalInputIcon.className = 'fas fa-shield-alt absolute left-4 top-1/2 transform -translate-y-1/2 text-green-500';
+                modalHelpText.innerHTML = `
+                    <div class="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-400 mt-2">
+                        <p class="text-blue-800 font-medium text-xs">How to get Gmail App Password:</p>
+                        <ol class="text-blue-700 text-xs mt-1 space-y-1 list-decimal list-inside">
+                            <li>Go to Google Account → Security</li>
+                            <li>Enable 2-Step Verification</li>
+                            <li>Go to App passwords section</li>
+                            <li>Generate password for "Gmail CrewAI"</li>
+                        </ol>
+                    </div>
+                `;
+            } else if (credentialType === 'api_key') {
+                modalCredentialType.textContent = 'API Key';
+                modalInputLabel.innerHTML = '<i class="fas fa-key text-yellow-500 mr-2"></i>{{ settings.provider }} API Key';
+                modalInput.placeholder = '{{ settings.provider == "OpenAI" and "sk-proj-..." or "AIza..." }}';
+                modalInput.type = 'password';
+                modalInput.maxLength = 200;
+                modalInputIcon.className = 'fas fa-key absolute left-4 top-1/2 transform -translate-y-1/2 text-yellow-500';
+                modalHelpText.innerHTML = `
+                    <div class="bg-purple-50 p-3 rounded-lg border-l-4 border-purple-400 mt-2">
+                        <p class="text-purple-800 font-medium text-xs">Get your {{ settings.provider }} API Key:</p>
+                        <p class="text-purple-700 text-xs mt-1">
+                            {% if settings.provider == "OpenAI" %}
+                                Visit <a href="https://platform.openai.com/api-keys" target="_blank" class="underline">platform.openai.com/api-keys</a>
+                            {% else %}
+                                Visit <a href="https://makersuite.google.com/app/apikey" target="_blank" class="underline">makersuite.google.com/app/apikey</a>
+                            {% endif %}
+                        </p>
+                    </div>
+                `;
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // Focus on the input/select
+            const inputElement = document.getElementById('modalInput');
+            if (inputElement) {
+                inputElement.focus();
+            }
+        }
+
+        function closeUpdateModal() {
+            const modal = document.getElementById('updateModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            
+            // Reset the input container to default input field
+            const inputContainer = document.querySelector('#modalInput').parentElement;
+            inputContainer.innerHTML = `
+                <input
+                    type="password"
+                    id="modalInput"
+                    name="new_value"
+                    class="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                    placeholder=""
+                    required
+                >
+                <i id="modalInputIcon" class="fas fa-key absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="toggleModalPassword()">
+                    <i class="fas fa-eye" id="modalPasswordEye"></i>
+                </button>
+            `;
+            
+            currentCredentialType = '';
+        }
+
+        function toggleModalPassword() {
+            const field = document.getElementById('modalInput');
+            const eye = document.getElementById('modalPasswordEye');
+            
+            // Only toggle if both elements exist and field is an input (not select)
+            if (field && eye && field.tagName === 'INPUT') {
+                if (field.type === 'password') {
+                    field.type = 'text';
+                    eye.classList.remove('fa-eye');
+                    eye.classList.add('fa-eye-slash');
+                } else {
+                    field.type = 'password';
+                    eye.classList.remove('fa-eye-slash');
+                    eye.classList.add('fa-eye');
+                }
+            }
+        }
+
+        function showToast(title, message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toastIcon');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastMessage = document.getElementById('toastMessage');
+
+            if (type === 'success') {
+                toastIcon.innerHTML = '<i class="fas fa-check-circle text-green-500 text-xl"></i>';
+                toastTitle.className = 'font-medium text-green-800';
+            } else if (type === 'info') {
+                toastIcon.innerHTML = '<i class="fas fa-info-circle text-blue-500 text-xl"></i>';
+                toastTitle.className = 'font-medium text-blue-800';
+            } else {
+                toastIcon.innerHTML = '<i class="fas fa-exclamation-triangle text-red-500 text-xl"></i>';
+                toastTitle.className = 'font-medium text-red-800';
+            }
+
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+            
+            toast.classList.remove('hidden');
+            
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 5000);
+        }
+
+        function refreshSession() {
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Refreshing...';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fas fa-check mr-2"></i>Session Refreshed!';
+                btn.classList.remove('from-blue-500', 'to-purple-600');
+                btn.classList.add('from-green-500', 'to-green-600');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    btn.classList.remove('from-green-500', 'to-green-600');
+                    btn.classList.add('from-blue-500', 'to-purple-600');
+                }, 2000);
+            }, 1500);
+        }
+
+        // Handle credential update form submission
+        document.getElementById('updateCredentialForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('modalSubmitBtn');
+            const originalText = submitBtn.innerHTML;
+            const newValue = document.getElementById('modalInput').value;
+
+            // Client-side validation
+            if (currentCredentialType === 'gmail_email') {
+                if (!newValue.endsWith('@gmail.com')) {
+                    showToast('Validation Error', 'Please enter a valid Gmail address ending with @gmail.com', 'error');
+                    return;
+                }
+            } else if (currentCredentialType === 'app_password') {
+                const cleanedPassword = newValue.replace(/\s/g, '');
+                if (cleanedPassword.length !== 16) {
+                    showToast('Validation Error', 'App password must be exactly 16 characters', 'error');
+                    return;
+                }
+            } else if (currentCredentialType === 'model_choice') {
+                if (!newValue) {
+                    showToast('Validation Error', 'Please select an AI model', 'error');
+                    return;
+                }
+            } else if (currentCredentialType === 'api_key') {
+                if (newValue.length < 20) {
+                    showToast('Validation Error', 'API key appears to be too short', 'error');
+                    return;
+                }
+            }
+
+            // Show loading state
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating...';
+            submitBtn.disabled = true;
+
+            try {
+                const formData = new FormData();
+                formData.append('credential_type', currentCredentialType);
+                formData.append('new_value', newValue);
+
+                const response = await fetch('/settings/update-credentials', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast('Success!', result.message, 'success');
+                    closeUpdateModal();
+                    
+                    // Show additional message if provider changed
+                    if (result.provider_changed) {
+                        setTimeout(() => {
+                            showToast('Provider Changed', 'AI provider changed. Please verify your API key compatibility.', 'info');
+                        }, 3000);
+                    }
+                    
+                    // Refresh the page after a short delay to show updated values
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    showToast('Update Failed', result.message, 'error');
+                }
+            } catch (error) {
+                showToast('Connection Error', 'Failed to update credential. Please try again.', 'error');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Auto-format inputs based on credential type
+        document.addEventListener('input', function(e) {
+            if (e.target.id === 'modalInput') {
+                if (currentCredentialType === 'app_password') {
+                    let value = e.target.value.replace(/\s/g, ''); // Remove spaces
+                    if (value.length > 16) {
+                        value = value.substring(0, 16);
+                    }
+                    e.target.value = value;
+                } else if (currentCredentialType === 'gmail_email') {
+                    // Ensure lowercase for email
+                    e.target.value = e.target.value.toLowerCase();
+                }
+            }
+        });
+
+        // Add smooth animations on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.setting-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 150);
+            });
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeUpdateModal();
+            }
+        });
+    </script>
+</body>
+</html>

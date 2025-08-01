@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gmail Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .progress-bar {
+            transition: width 1s ease-in-out;
+        }
+        
+        /* Tab styles */
+        .tab-content {
+            transition: opacity 0.3s ease-in-out;
+        }
+        .tab-content.hidden {
+            display: none;
+        }
+        
+        .tab-button {
+            transition: all 0.2s ease;
+        }
+        
+        .tab-button.active {
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+        
+        /* Archive email card styles */
+        .archive-email-card {
+            transition: all 0.2s ease;
+            border-left: 4px solid transparent;
+        }
+        .archive-email-card:hover {
+            border-left-color: #3b82f6;
+            background-color: #f8fafc;
+            transform: translateX(2px);
+        }
+        
+        /* Email preview truncation */
+        .email-preview {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        /* Date input styling */
+        input[type="date"] {
+            position: relative;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            color: #6b7280;
+            cursor: pointer;
+        }
+
+        /* Enhanced animations for real-time monitoring */
+        @keyframes pulse-green {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @keyframes bounce-in {
+            0% { transform: scale(0.9); opacity: 0; }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes slide-in-right {
+            0% { transform: translateX(10px); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        
+        .animate-bounce-in {
+            animation: bounce-in 0.3s ease-out;
+        }
+        
+        .animate-slide-in {
+            animation: slide-in-right 0.3s ease-out;
+        }
+        
+        .pulse-success {
+            animation: pulse-green 1s ease-in-out;
+        }
+        
+        /* Status indicator styles */
+        .status-indicator {
+            position: relative;
+        }
+        
+        .status-indicator.listening::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 8px;
+            height: 8px;
+            background: #10B981;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+        
+        /* Log entry styles */
+        .log-entry {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .log-entry:hover {
+            background-color: rgba(59, 130, 246, 0.05);
+            border-left-width: 6px;
+        }
+        
+        /* Enhanced button states */
+        .btn-listening {
+            background: linear-gradient(135deg, #10B981, #059669);
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+        }
+        
+        .btn-error {
+            background: linear-gradient(135deg, #EF4444, #DC2626);
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+        }
+        
+        /* Activity log entry styles */
+        .activity-log-entry {
+            transition: all 0.2s ease-in-out;
+            animation: slide-in-right 0.3s ease-out;
+        }
+        
+        .activity-log-entry:hover {
+            transform: translateX(2px);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-envelope text-blue-600 text-2xl mr-3"></i>
+                    <h1 class="text-xl font-semibold text-gray-900">Gmail Dashboard</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/crew-config" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150">
+                        <i class="fas fa-robot mr-2"></i>AI Config
+                    </a>
+                    <a href="/settings" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150">
+                        <i class="fas fa-cog mr-2"></i>Settings
+                    </a>
+                    <button onclick="openGmail()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150">
+                        <i class="fab fa-google mr-2"></i>Open Gmail
+                    </button>
+                    <button onclick="refreshData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh
+                    </button>
+                    <a href="/auth/logout" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <!-- Success Message -->
+        {% if success_message %}
+        <div id="success-banner" class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4 fade-in">
+            <div class="flex">
+                <i class="fas fa-check-circle text-green-400 mr-3 mt-1"></i>
+                <div>
+                    <h3 class="text-sm font-medium text-green-800">Success!</h3>
+                    <p class="mt-1 text-sm text-green-700">{{ success_message }}</p>
+                </div>
+                <button onclick="this.parentElement.parentElement.style.display='none'" class="ml-auto text-green-400 hover:text-green-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Loading Spinner -->
+        <div id="loading" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white p-6 rounded-lg shadow-xl">
+                <div class="flex items-center">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
+                    <span class="text-gray-700">Loading...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="mb-8">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                    <button onclick="switchTab('inbox')" id="inbox-tab" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-inbox mr-2"></i>Inbox Dashboard
+                    </button>
+                    <button onclick="switchTab('drafts')" id="drafts-tab" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-edit mr-2"></i>Response Drafts
+                    </button>
+                    <button onclick="switchTab('archive')" id="archive-tab" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-archive mr-2"></i>Email Archive
+                    </button>
+                    <button onclick="switchTab('realtime')" id="realtime-tab" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-bolt mr-2"></i>Real-time Monitor
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Real-time Monitoring Tab Content -->
+        <div id="realtime-content" class="tab-content hidden">
+            <!-- Real-time Monitoring Control Panel -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Real-time Email Monitoring</h2>
+                
+                <!-- Status Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <!-- Listener Status -->
+                    <div class="bg-white overflow-hidden shadow rounded-lg">
+                        <div class="p-6">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <i id="listener-status-icon" class="fas fa-circle text-gray-400 text-2xl"></i>
+                                </div>
+                                <div class="ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt class="text-sm font-medium text-gray-500 truncate">Listener Status</dt>
+                                        <dd id="listener-status-text" class="text-lg font-medium text-gray-900">Stopped</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Emails Detected -->
+                    <div class="bg-white overflow-hidden shadow rounded-lg">
+                        <div class="p-6">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-envelope text-blue-600 text-2xl"></i>
+                                </div>
+                                <div class="ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt class="text-sm font-medium text-gray-500 truncate">Emails Detected</dt>
+                                        <dd id="emails-detected-count" class="text-lg font-medium text-gray-900">0</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Last Activity -->
+                    <div class="bg-white overflow-hidden shadow rounded-lg">
+                        <div class="p-6">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-clock text-green-600 text-2xl"></i>
+                                </div>
+                                <div class="ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt class="text-sm font-medium text-gray-500 truncate">Last Activity</dt>
+                                        <dd id="last-activity-time" class="text-lg font-medium text-gray-900">Never</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Control Buttons -->
+                <div class="bg-white shadow rounded-lg p-6 mb-6">
+                    <div class="flex flex-wrap gap-4 justify-center">
+                        <button id="start-listener-btn" onclick="startListener()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-md font-medium transition duration-150 flex items-center">
+                            <i class="fas fa-play mr-2"></i>Start Monitoring
+                        </button>
+                        <button id="stop-listener-btn" onclick="stopListener()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-md font-medium transition duration-150 flex items-center" disabled>
+                            <i class="fas fa-stop mr-2"></i>Stop Monitoring
+                        </button>
+                        <button id="restart-listener-btn" onclick="restartListener()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-md font-medium transition duration-150 flex items-center">
+                            <i class="fas fa-redo mr-2"></i>Restart
+                        </button>
+                        <button onclick="checkListenerStatus()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium transition duration-150 flex items-center">
+                            <i class="fas fa-sync mr-2"></i>Check Status
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Monitoring Log -->
+                <div class="bg-white shadow rounded-lg mb-6">
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="text-lg font-medium text-gray-900">Activity Log</h3>
+                        <div class="flex space-x-2">
+                            <button onclick="refreshActivityLogs()" class="text-blue-600 hover:text-blue-800 text-sm">
+                                <i class="fas fa-sync mr-1"></i>Refresh
+                            </button>
+                            <span id="auto-refresh-indicator" class="text-xs text-green-600 px-2 py-1 bg-green-100 rounded">
+                                <i class="fas fa-circle text-xs mr-1"></i>Auto-refresh ON
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div id="monitoring-log" class="bg-gray-50 border rounded-lg p-4 h-80 overflow-y-auto font-mono text-sm space-y-1">
+                            <div class="text-gray-500 text-center py-8 italic">Real-time monitoring log will appear here...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inbox Tab Content -->
+        <div id="inbox-content" class="tab-content">
+
+        <!-- Dashboard Stats -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Email Analytics Overview</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6" id="stats-grid">
+                <!-- Stats cards will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Email Volume Chart -->
+            <div class="bg-white overflow-hidden shadow rounded-lg card-hover transition-all duration-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Email Volume by Date</h3>
+                </div>
+                <div class="p-6">
+                    <canvas id="emailVolumeChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+
+            <!-- Priority Distribution -->
+            <div class="bg-white overflow-hidden shadow rounded-lg card-hover transition-all duration-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Priority Distribution</h3>
+                </div>
+                <div class="p-6">
+                    <canvas id="priorityChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+
+            <!-- Top Senders -->
+            <div class="bg-white overflow-hidden shadow rounded-lg card-hover transition-all duration-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Top Email Senders</h3>
+                </div>
+                <div class="p-6">
+                    <canvas id="sendersChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+
+            <!-- Domain Analysis -->
+            <div class="bg-white overflow-hidden shadow rounded-lg card-hover transition-all duration-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Top Email Domains</h3>
+                </div>
+                <div class="p-6">
+                    <canvas id="domainsChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+
+
+        
+        </div> <!-- End Inbox Tab -->
+
+        <!-- Response Drafts Tab -->
+        <div id="drafts-content" class="tab-content hidden">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">AI-Generated Response Drafts</h2>
+                <p class="text-gray-600">Review and manage the email responses generated by your AI assistant.</p>
+            </div>
+
+            <!-- Draft Responses Section -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900">Draft Responses</h3>
+                        <p class="text-sm text-gray-600 mt-1">AI-generated email responses ready for review and sending</p>
+                    </div>
+                    <button onclick="loadDrafts()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh Drafts
+                    </button>
+                </div>
+                <div id="draftsContainer" class="p-6">
+                    <!-- Draft responses will be populated by JavaScript -->
+                </div>
+            </div>
+        </div> <!-- End Response Drafts Tab -->
+
+        <!-- Email Archive Tab -->
+        <div id="archive-content" class="tab-content hidden">
+            <!-- Archive Controls -->
+            <div class="bg-white shadow rounded-lg mb-6">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Email Archive</h3>
+                    <p class="text-sm text-gray-600 mt-1">Search and filter your emails by date range</p>
+                </div>
+                <div class="p-6 filter-controls">
+                    <!-- Date Range Picker -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                        <div class="date-input-container">
+                            <label for="fromDate" class="block text-sm font-medium text-gray-700 mb-1">From Date</label>
+                            <input type="date" id="fromDate" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div class="date-input-container">
+                            <label for="toDate" class="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+                            <input type="date" id="toDate" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="archiveLimit" class="block text-sm font-medium text-gray-700 mb-1">Limit</label>
+                            <select id="archiveLimit" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                <option value="50">50 emails</option>
+                                <option value="100">100 emails</option>
+                                <option value="200">200 emails</option>
+                                <option value="500">500 emails</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end">
+                            <button onclick="loadArchiveEmails()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150 button-hover">
+                                <i class="fas fa-search mr-2"></i>Search
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Search Bar -->
+                    <div class="mb-4 search-container">
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-search text-gray-400 search-icon"></i>
+                            </div>
+                            <input type="text" id="searchKeywords" placeholder="Search emails by keywords, sender, or subject..." 
+                                   class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                   onkeyup="filterArchiveEmails()">
+                        </div>
+                    </div>
+
+                    <!-- Sort Options -->
+                    <div class="flex flex-wrap items-center gap-4">
+                        <div>
+                            <label for="sortBy" class="block text-sm font-medium text-gray-700 mb-1">Sort by</label>
+                            <select id="sortBy" onchange="sortArchiveEmails()" class="border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                <option value="date">Date</option>
+                                <option value="sender">Sender</option>
+                                <option value="subject">Subject</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="sortOrder" class="block text-sm font-medium text-gray-700 mb-1">Order</label>
+                            <select id="sortOrder" onchange="sortArchiveEmails()" class="border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                <option value="desc">Newest First</option>
+                                <option value="asc">Oldest First</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Archive Results -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-medium text-gray-900">Search Results</h3>
+                        <span id="archiveCount" class="results-count">0 emails found</span>
+                    </div>
+                </div>
+                <div id="archiveResults" class="divide-y divide-gray-200">
+                    <!-- Archive results will be populated by JavaScript -->
+                    <div class="p-6 text-center text-gray-500">
+                        <i class="fas fa-search text-4xl mb-4"></i>
+                        <p>Use the search filters above to find emails</p>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- End Archive Tab -->
+    </div>
+
+    <!-- Email Detail Modal -->
+    <div id="emailModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-40">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-screen overflow-y-auto">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="text-lg font-medium text-gray-900">Email Details</h3>
+                    <button onclick="closeEmailModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div id="emailModalContent" class="p-6">
+                    <!-- Email content will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let analyticsData = null;
+        let charts = {};
+        let archiveEmails = [];
+        let filteredArchiveEmails = [];
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize tabs - start with inbox
+            switchTab('inbox');
+            
+            // Load inbox data
+            loadAnalytics();
+            loadDrafts();
+            
+            // Initialize date inputs for archive
+            initializeDateInputs();
+        });
+
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.add('hidden'));
+
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('nav button');
+            tabs.forEach(tab => {
+                tab.classList.remove('text-blue-600', 'border-blue-500');
+                tab.classList.add('text-gray-500', 'border-transparent');
+            });
+
+            // Show selected tab content
+            document.getElementById(tabName + '-content').classList.remove('hidden');
+
+            // Add active class to selected tab
+            const activeTab = document.getElementById(tabName + '-tab');
+            activeTab.classList.remove('text-gray-500', 'border-transparent');
+            activeTab.classList.add('text-blue-600', 'border-blue-500');
+
+            // Load specific content based on tab
+            if (tabName === 'drafts') {
+                loadDrafts();
+            } else if (tabName === 'inbox') {
+                loadAnalytics();
+            }
+        }
+
+        // Initialize date inputs with default values
+        function initializeDateInputs() {
+            const today = new Date();
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(today.getDate() - 30);
+
+            document.getElementById('toDate').value = today.toISOString().split('T')[0];
+            document.getElementById('fromDate').value = thirtyDaysAgo.toISOString().split('T')[0];
+        }
+
+        // Archive functionality
+        function loadArchiveEmails() {
+            const fromDate = document.getElementById('fromDate').value;
+            const toDate = document.getElementById('toDate').value;
+            const searchQuery = document.getElementById('searchKeywords').value;
+            const limit = document.getElementById('archiveLimit').value;
+            const sortBy = document.getElementById('sortBy').value;
+            const sortOrder = document.getElementById('sortOrder').value;
+            
+            if (!fromDate && !toDate && !searchQuery) {
+                showNotification('Please set at least one filter (date range or search term)', 'warning');
+                return;
+            }
+            
+            showLoading();
+            
+            // Build query parameters
+            const params = new URLSearchParams();
+            if (fromDate) params.append('date_from', fromDate);
+            if (toDate) params.append('date_to', toDate);
+            if (searchQuery) params.append('search_query', searchQuery);
+            params.append('limit', limit);
+            params.append('sort_by', sortBy);
+            params.append('sort_order', sortOrder);
+            params.append('folder', 'ALL'); // Search all mail
+            params.append('include_read', 'true');
+            params.append('include_unread', 'true');
+            
+            fetch(`/api/emails/archive?${params.toString()}`)
+                .then(response => response.json())
+                .then(data => {
+                    archiveEmails = data.emails || [];
+                    filteredArchiveEmails = [...archiveEmails];
+                    displayArchiveEmails(filteredArchiveEmails);
+                    updateArchiveCount(filteredArchiveEmails.length);
+                    hideLoading();
+                })
+                .catch(error => {
+                    console.error('Error loading archive emails:', error);
+                    showNotification('Error loading archive emails', 'error');
+                    hideLoading();
+                });
+        }
+        
+        function displayArchiveEmails(emails) {
+            const container = document.getElementById('archiveResults');
+            
+            if (!emails || emails.length === 0) {
+                container.innerHTML = `
+                    <div class="p-6 text-center text-gray-500">
+                        <i class="fas fa-inbox text-4xl mb-4"></i>
+                        <p>No emails found matching your criteria</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = emails.map(email => `
+                <div class="archive-email-card p-4 hover:bg-gray-50 ${email.needs_response ? 'needs-response' : 'no-response'}">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center mb-2">
+                                <h4 class="text-sm font-medium text-gray-900 truncate">${escapeHtml(email.subject)}</h4>
+                                <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    email.needs_response ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                                }">
+                                    ${email.needs_response ? 'Needs Response' : 'No Response Needed'}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-1">
+                                <i class="fas fa-user text-xs mr-1"></i>
+                                ${escapeHtml(email.sender)}
+                            </p>
+                            <p class="text-sm text-gray-500 mb-2">
+                                <i class="fas fa-calendar text-xs mr-1"></i>
+                                ${email.date || 'Unknown date'} ${email.age_days !== undefined ? `(${email.age_days} days ago)` : ''}
+                            </p>
+                            <p class="text-sm text-gray-700 email-preview">${escapeHtml(email.body_preview)}</p>
+                        </div>
+                        <div class="ml-4 flex-shrink-0 flex space-x-2">
+                            <button onclick="viewEmailDetails('${email.email_id}', ${JSON.stringify(email).replace(/"/g, '&quot;')})" 
+                                    class="action-button bg-blue-100 text-blue-700 hover:bg-blue-200">
+                                <i class="fas fa-eye"></i>
+                                View
+                            </button>
+                            <button onclick="viewEmailThread('${email.email_id}')" 
+                                    class="action-button bg-purple-100 text-purple-700 hover:bg-purple-200">
+                                <i class="fas fa-comments"></i>
+                                Thread
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function filterArchiveEmails() {
+            const searchQuery = document.getElementById('searchKeywords').value.toLowerCase();
+            
+            if (!searchQuery) {
+                filteredArchiveEmails = [...archiveEmails];
+            } else {
+                filteredArchiveEmails = archiveEmails.filter(email => 
+                    email.subject.toLowerCase().includes(searchQuery) ||
+                    email.sender.toLowerCase().includes(searchQuery) ||
+                    email.body_preview.toLowerCase().includes(searchQuery)
+                );
+            }
+            
+            displayArchiveEmails(filteredArchiveEmails);
+            updateArchiveCount(filteredArchiveEmails.length);
+        }
+        
+        function sortArchiveEmails() {
+            const sortBy = document.getElementById('sortBy').value;
+            const sortOrder = document.getElementById('sortOrder').value;
+            
+            filteredArchiveEmails.sort((a, b) => {
+                let comparison = 0;
+                
+                switch (sortBy) {
+                    case 'sender':
+                        comparison = a.sender.localeCompare(b.sender);
+                        break;
+                    case 'subject':
+                        comparison = a.subject.localeCompare(b.subject);
+                        break;
+                    case 'date':
+                    default:
+                        comparison = (a.date || '').localeCompare(b.date || '');
+                        break;
+                }
+                
+                return sortOrder === 'desc' ? -comparison : comparison;
+            });
+            
+            displayArchiveEmails(filteredArchiveEmails);
+        }
+        
+        function updateArchiveCount(count) {
+            document.getElementById('archiveCount').textContent = `${count} email${count !== 1 ? 's' : ''} found`;
+        }
+        
+        function clearArchiveFilters() {
+            document.getElementById('fromDate').value = '';
+            document.getElementById('toDate').value = '';
+            document.getElementById('searchKeywords').value = '';
+            document.getElementById('archiveLimit').value = '50';
+            document.getElementById('sortBy').value = 'date';
+            document.getElementById('sortOrder').value = 'desc';
+            
+            archiveEmails = [];
+            filteredArchiveEmails = [];
+            
+            document.getElementById('archiveResults').innerHTML = `
+                <div class="p-6 text-center text-gray-500">
+                    <i class="fas fa-search text-4xl mb-4"></i>
+                    <p>Use the search filters above to find emails</p>
+                </div>
+            `;
+            
+            updateArchiveCount(0);
+        }
+        
+        function initializeDateInputs() {
+            // Set default date range (last 30 days)
+            const today = new Date();
+            const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+            
+            document.getElementById('toDate').value = today.toISOString().split('T')[0];
+            document.getElementById('fromDate').value = thirtyDaysAgo.toISOString().split('T')[0];
+        }
+        
+        function exportArchiveResults() {
+            if (!filteredArchiveEmails || filteredArchiveEmails.length === 0) {
+                showNotification('No emails to export', 'warning');
+                return;
+            }
+            
+            const csvContent = [
+                ['Subject', 'Sender', 'Date', 'Needs Response', 'Preview'].join(','),
+                ...filteredArchiveEmails.map(email => [
+                    `"${email.subject.replace(/"/g, '""')}"`,
+                    `"${email.sender.replace(/"/g, '""')}"`,
+                    `"${email.date || ''}"`,
+                    email.needs_response ? 'Yes' : 'No',
+                    `"${email.body_preview.replace(/"/g, '""')}"`
+                ].join(','))
+            ].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `email_archive_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showNotification('Archive exported successfully', 'success');
+        }
+
+        // Analytics and dashboard functions
+        async function loadAnalytics() {
+            try {
+                const response = await fetch('/api/emails/analytics');
+                analyticsData = await response.json();
+                updateStatsCards();
+                updateCharts();
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+                showNotification('Error loading analytics data', 'error');
+            }
+        }
+        
+        // Update stats cards
+        function updateStatsCards() {
+            const statsGrid = document.getElementById('stats-grid');
+            const stats = [
+                {
+                    title: 'Total Emails',
+                    value: analyticsData.total_emails,
+                    icon: 'fas fa-envelope',
+                    color: 'blue'
+                },
+                {
+                    title: 'Responses Generated',
+                    value: analyticsData.response_needed,
+                    icon: 'fas fa-reply',
+                    color: 'red'
+                },
+                {
+                    title: 'Responded To',
+                    value: analyticsData.responded_to || 0,
+                    icon: 'fas fa-check-circle',
+                    color: 'green'
+                },
+                {
+                    title: 'Response Rate',
+                    value: analyticsData.response_rate + '%',
+                    icon: 'fas fa-percentage',
+                    color: 'purple'
+                },
+                {
+                    title: 'Threads',
+                    value: analyticsData.thread_stats.total_threads,
+                    icon: 'fas fa-comments',
+                    color: 'indigo'
+                }
+            ];
+
+            statsGrid.innerHTML = stats.map(stat => `
+                <div class="bg-white overflow-hidden shadow rounded-lg card-hover transition-all duration-200 fade-in">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <i class="${stat.icon} text-${stat.color}-600 text-2xl"></i>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">${stat.title}</dt>
+                                    <dd class="text-lg font-medium text-gray-900">${stat.value}</dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Update charts
+        function updateCharts() {
+            updateEmailVolumeChart();
+            updatePriorityChart();
+            updateSendersChart();
+            updateDomainsChart();
+        }
+        
+        function updateEmailVolumeChart() {
+            const ctx = document.getElementById('emailVolumeChart').getContext('2d');
+            const dates = Object.keys(analyticsData.by_date).sort();
+            const volumes = dates.map(date => analyticsData.by_date[date]);
+            
+            if (charts.emailVolume) {
+                charts.emailVolume.destroy();
+            }
+            
+            charts.emailVolume = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Emails per Day',
+                        data: volumes,
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updatePriorityChart() {
+            const ctx = document.getElementById('priorityChart').getContext('2d');
+            
+            if (charts.priority) {
+                charts.priority.destroy();
+            }
+            
+            charts.priority = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['High Priority', 'Medium Priority', 'Low Priority'],
+                    datasets: [{
+                        data: [
+                            analyticsData.by_priority.high,
+                            analyticsData.by_priority.medium,
+                            analyticsData.by_priority.low
+                        ],
+                        backgroundColor: [
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(16, 185, 129, 0.8)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+        
+        function updateSendersChart() {
+            const ctx = document.getElementById('sendersChart').getContext('2d');
+            const senders = Object.keys(analyticsData.by_sender).slice(0, 5);
+            const counts = senders.map(sender => analyticsData.by_sender[sender]);
+            
+            if (charts.senders) {
+                charts.senders.destroy();
+            }
+            
+            charts.senders = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: senders.map(sender => sender.length > 20 ? sender.substring(0, 20) + '...' : sender),
+                    datasets: [{
+                        label: 'Email Count',
+                        data: counts,
+                        backgroundColor: 'rgba(139, 92, 246, 0.8)',
+                        borderColor: 'rgba(139, 92, 246, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateDomainsChart() {
+            const ctx = document.getElementById('domainsChart').getContext('2d');
+            const domains = Object.keys(analyticsData.top_domains).slice(0, 5);
+            const counts = domains.map(domain => analyticsData.top_domains[domain]);
+            
+            if (charts.domains) {
+                charts.domains.destroy();
+            }
+            
+            charts.domains = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: domains,
+                    datasets: [{
+                        data: counts,
+                        backgroundColor: [
+                            'rgba(34, 197, 94, 0.8)',
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(139, 92, 246, 0.8)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+        
+        // Load draft responses
+        async function loadDrafts() {
+            try {
+                const response = await fetch('/api/responses/drafts');
+                const data = await response.json();
+                displayDrafts(data.drafts || []);
+            } catch (error) {
+                console.error('Error loading drafts:', error);
+                const container = document.getElementById('draftsContainer');
+                container.innerHTML = '<p class="text-gray-500 italic">Error loading draft responses.</p>';
+            }
+        }
+        
+        function displayDrafts(drafts) {
+            const container = document.getElementById('draftsContainer');
+            
+            if (!drafts || drafts.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 italic">No draft responses found. Run the AI crew to generate responses.</p>';
+                return;
+            }
+            
+            container.innerHTML = drafts.map(draft => `
+                <div class="border-l-4 border-blue-500 pl-4 mb-6 bg-gray-50 p-4 rounded-r-lg">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="text-sm font-medium text-gray-900">${escapeHtml(draft.subject || 'No Subject')}</h4>
+                        <span class="text-xs text-gray-500">${draft.created_at || 'Recently generated'}</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-2">
+                        <i class="fas fa-user mr-1"></i>To: ${escapeHtml(draft.recipient || 'Unknown')}
+                    </p>
+                    ${draft.response_summary ? `
+                        <div class="bg-blue-50 border border-blue-200 rounded p-3 mb-3">
+                            <h5 class="text-xs font-semibold text-blue-800 mb-1">
+                                <i class="fas fa-robot mr-1"></i>AI Response Summary
+                            </h5>
+                            <p class="text-sm text-blue-700">${escapeHtml(draft.response_summary)}</p>
+                        </div>
+                    ` : ''}
+                    <div class="bg-white border rounded p-3">
+                        <h5 class="text-xs font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-envelope mr-1"></i>Draft Response
+                        </h5>
+                        <p class="text-sm text-gray-700 whitespace-pre-wrap">${escapeHtml(draft.body || 'No content')}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Utility functions
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text ? text.replace(/[&<>"']/g, function(m) { return map[m]; }) : '';
+        }
+        
+        function showLoading() {
+            document.getElementById('loading').classList.remove('hidden');
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading').classList.add('hidden');
+        }
+        
+        function showNotification(message, type = 'info') {
+            // Simple notification - you can enhance this
+            const colors = {
+                'success': 'bg-green-500',
+                'error': 'bg-red-500',
+                'warning': 'bg-yellow-500',
+                'info': 'bg-blue-500'
+            };
+            
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 notification`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+        
+        async function refreshData() {
+            showLoading();
+            try {
+                await loadAnalytics();
+                await loadDrafts();
+                showNotification('Data refreshed successfully', 'success');
+            } catch (error) {
+                console.error('Error refreshing data:', error);
+                showNotification('Error refreshing data', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        async function runCrew() {
+            showLoading();
+            try {
+                const response = await fetch('/api/crew/run?email_limit=5', { method: 'POST' });
+                const result = await response.json();
+                showNotification('AI crew completed successfully', 'success');
+                await refreshData();
+            } catch (error) {
+                console.error('Error running crew:', error);
+                showNotification('Error running AI crew', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        function viewEmailDetails(emailId, emailData) {
+            const modal = document.getElementById('emailModal');
+            const content = document.getElementById('emailModalContent');
+            
+            content.innerHTML = `
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900">Subject</h3>
+                        <p class="text-gray-700">${escapeHtml(emailData.subject || 'No Subject')}</p>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900">From</h3>
+                        <p class="text-gray-700">${escapeHtml(emailData.sender || 'Unknown')}</p>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900">Date</h3>
+                        <p class="text-gray-700">${emailData.date || 'Unknown'} ${emailData.age_days !== undefined ? `(${emailData.age_days} days ago)` : ''}</p>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900">Status</h3>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            emailData.needs_response ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                        }">
+                            ${emailData.needs_response ? 'Needs Response' : 'No Response Needed'}
+                        </span>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900">Content</h3>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-gray-700 whitespace-pre-wrap">${escapeHtml(emailData.body || emailData.body_preview || 'No content available')}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+        }
+        
+        function closeEmailModal() {
+            document.getElementById('emailModal').classList.add('hidden');
+        }
+        
+        function viewEmailThread(emailId) {
+            // This would fetch and display thread history
+            showNotification('Thread view functionality coming soon', 'info');
+        }
+
+        function openGmail() {
+            window.open('https://mail.google.com', '_blank');
+        }
+
+        // ===================================
+        // Real-time Monitoring Functions
+        // ===================================
+        
+        async function startListener() {
+            const startBtn = document.getElementById('start-listener-btn');
+            const stopBtn = document.getElementById('stop-listener-btn');
+            
+            startBtn.disabled = true;
+            startBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Starting...';
+            
+            try {
+                const response = await fetch('/api/listener/start', { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.status === 'started' || result.status === 'already_running') {
+                    showNotification('Real-time listener started successfully', 'success');
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                    addLogEntry('✓ Real-time email monitoring started');
+                    updateListenerStatus(result.listener_status);
+                } else {
+                    showNotification('Failed to start listener', 'error');
+                }
+            } catch (error) {
+                console.error('Error starting listener:', error);
+                showNotification('Error starting real-time listener', 'error');
+                addLogEntry('✗ Error starting listener: ' + error.message);
+            } finally {
+                startBtn.disabled = false;
+                startBtn.innerHTML = '<i class="fas fa-play mr-2"></i>Start Monitoring';
+            }
+        }
+        
+        async function stopListener() {
+            const startBtn = document.getElementById('start-listener-btn');
+            const stopBtn = document.getElementById('stop-listener-btn');
+            
+            stopBtn.disabled = true;
+            stopBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Stopping...';
+            
+            try {
+                const response = await fetch('/api/listener/stop', { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.status === 'stopped' || result.status === 'not_running') {
+                    showNotification('Real-time listener stopped', 'success');
+                    startBtn.disabled = false;
+                    stopBtn.disabled = true;
+                    addLogEntry('✓ Real-time email monitoring stopped');
+                    updateListenerStatus(result.listener_status);
+                } else {
+                    showNotification('Failed to stop listener', 'error');
+                }
+            } catch (error) {
+                console.error('Error stopping listener:', error);
+                showNotification('Error stopping real-time listener', 'error');
+                addLogEntry('✗ Error stopping listener: ' + error.message);
+            } finally {
+                stopBtn.disabled = false;
+                stopBtn.innerHTML = '<i class="fas fa-stop mr-2"></i>Stop Monitoring';
+            }
+        }
+        
+        async function restartListener() {
+            const restartBtn = document.getElementById('restart-listener-btn');
+            
+            restartBtn.disabled = true;
+            restartBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Restarting...';
+            
+            try {
+                const response = await fetch('/api/listener/restart', { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.status === 'restarted') {
+                    showNotification('Real-time listener restarted successfully', 'success');
+                    addLogEntry('✓ Real-time email monitoring restarted');
+                    updateListenerStatus(result.listener_status);
+                    
+                    // Update button states
+                    document.getElementById('start-listener-btn').disabled = true;
+                    document.getElementById('stop-listener-btn').disabled = false;
+                } else {
+                    showNotification('Failed to restart listener', 'error');
+                    addLogEntry('✗ Failed to restart listener');
+                }
+            } catch (error) {
+                console.error('Error restarting listener:', error);
+                showNotification('Error restarting real-time listener', 'error');
+                addLogEntry('✗ Error restarting listener: ' + error.message);
+            } finally {
+                restartBtn.disabled = false;
+                restartBtn.innerHTML = '<i class="fas fa-redo mr-2"></i>Restart';
+            }
+        }
+        
+        async function checkListenerStatus() {
+            try {
+                const response = await fetch('/api/listener/status');
+                const result = await response.json();
+                
+                updateListenerStatus(result.listener_status);
+                
+                // Add status check log entry with more detail
+                const status = result.listener_status.stats.status;
+                const emailCount = result.listener_status.stats.emails_detected || 0;
+                const statusEmoji = status === 'listening' ? '🟢' : status === 'error' ? '🔴' : status === 'starting' ? '🟡' : '⚪';
+                addLogEntry(`${statusEmoji} Status: ${status.toUpperCase()} | Emails detected: ${emailCount}`);
+                
+                // Update button states based on status
+                const isListening = result.listener_status.is_listening;
+                document.getElementById('start-listener-btn').disabled = isListening;
+                document.getElementById('stop-listener-btn').disabled = !isListening;
+                
+                // Show configuration errors if any
+                if (status === 'configuration_error') {
+                    showNotification('Configuration Error: Please check your Gmail credentials in settings', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Error checking listener status:', error);
+                showNotification('Error checking listener status: ' + error.message, 'error');
+                addLogEntry('❌ Error checking status: ' + error.message);
+                
+                // Reset status indicators on error
+                const statusIcon = document.getElementById('listener-status-icon');
+                const statusText = document.getElementById('listener-status-text');
+                statusIcon.className = 'fas fa-exclamation-triangle text-red-500 text-2xl';
+                statusText.textContent = 'Connection Error';
+                statusText.className = 'text-lg font-medium text-red-900';
+            }
+        }
+        
+        function updateListenerStatus(listenerStatus) {
+            const statusIcon = document.getElementById('listener-status-icon');
+            const statusText = document.getElementById('listener-status-text');
+            const emailsCount = document.getElementById('emails-detected-count');
+            const lastActivity = document.getElementById('last-activity-time');
+            
+            // Update status with enhanced visual feedback
+            const status = listenerStatus.stats.status;
+            statusText.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+            
+            // Update status icon and color with animations
+            statusIcon.className = 'fas text-2xl';
+            if (status === 'listening') {
+                statusIcon.classList.add('fa-circle', 'text-green-500', 'animate-pulse');
+                statusText.className = 'text-lg font-medium text-green-900';
+            } else if (status === 'error') {
+                statusIcon.classList.add('fa-exclamation-circle', 'text-red-500');
+                statusText.className = 'text-lg font-medium text-red-900';
+            } else if (status === 'starting') {
+                statusIcon.classList.add('fa-spinner', 'fa-spin', 'text-yellow-500');
+                statusText.className = 'text-lg font-medium text-yellow-900';
+            } else if (status === 'configuration_error') {
+                statusIcon.classList.add('fa-exclamation-triangle', 'text-orange-500');
+                statusText.className = 'text-lg font-medium text-orange-900';
+            } else {
+                statusIcon.classList.add('fa-circle', 'text-gray-400');
+                statusText.className = 'text-lg font-medium text-gray-900';
+            }
+            
+            // Update emails detected count with animation
+            const currentCount = parseInt(emailsCount.textContent) || 0;
+            const newCount = listenerStatus.stats.emails_detected || 0;
+            if (newCount > currentCount) {
+                emailsCount.style.animation = 'pulse 0.5s ease-in-out';
+                setTimeout(() => {
+                    emailsCount.style.animation = '';
+                }, 500);
+            }
+            emailsCount.textContent = newCount;
+            
+            // Update last activity with relative time
+            const lastActivityTime = listenerStatus.stats.last_activity;
+            if (lastActivityTime) {
+                const activityDate = new Date(lastActivityTime);
+                const now = new Date();
+                const diffMs = now - activityDate;
+                const diffSecs = Math.floor(diffMs / 1000);
+                const diffMins = Math.floor(diffSecs / 60);
+                const diffHours = Math.floor(diffMins / 60);
+                
+                let relativeTime;
+                if (diffSecs < 60) {
+                    relativeTime = 'Just now';
+                } else if (diffMins < 60) {
+                    relativeTime = `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+                } else if (diffHours < 24) {
+                    relativeTime = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+                } else {
+                    relativeTime = activityDate.toLocaleDateString();
+                }
+                
+                lastActivity.innerHTML = `
+                    <span title="${activityDate.toLocaleString()}">${relativeTime}</span>
+                    <br><small class="text-xs text-gray-500">${activityDate.toLocaleTimeString()}</small>
+                `;
+            } else {
+                lastActivity.textContent = 'Never';
+            }
+            
+            // Update connection errors if any
+            const connectionErrors = listenerStatus.stats.connection_errors || 0;
+            if (connectionErrors > 0) {
+                const errorBadge = document.createElement('span');
+                errorBadge.className = 'ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800';
+                errorBadge.textContent = `${connectionErrors} error${connectionErrors > 1 ? 's' : ''}`;
+                if (!statusText.querySelector('.bg-red-100')) {
+                    statusText.appendChild(errorBadge);
+                }
+            }
+        }
+        
+        function addLogEntry(message) {
+            const log = document.getElementById('monitoring-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = 'text-gray-700 mb-1';
+            logEntry.innerHTML = `<span class="text-gray-500">[${timestamp}]</span> ${message}`;
+            
+            // Add to top of log
+            if (log.firstChild && log.firstChild.className !== 'text-gray-500') {
+                log.insertBefore(logEntry, log.firstChild);
+            } else {
+                // Remove placeholder text if present
+                if (log.firstChild && log.firstChild.className === 'text-gray-500') {
+                    log.removeChild(log.firstChild);
+                }
+                log.appendChild(logEntry);
+            }
+            
+            // Keep only last 50 entries
+            while (log.children.length > 50) {
+                log.removeChild(log.lastChild);
+            }
+            
+            // Scroll to top
+            log.scrollTop = 0;
+        }
+        
+        // Auto-refresh listener status every 10 seconds when on real-time tab
+        let statusRefreshInterval;
+        
+        function startStatusRefresh() {
+            // Clear any existing interval
+            if (statusRefreshInterval) {
+                clearInterval(statusRefreshInterval);
+            }
+            
+            statusRefreshInterval = setInterval(() => {
+                const realtimeTab = document.getElementById('realtime-content');
+                if (!realtimeTab.classList.contains('hidden')) {
+                    checkListenerStatus();
+                    refreshActivityLogs(); // Also refresh activity logs
+                    
+                    // Update refresh indicator
+                    const indicator = document.getElementById('auto-refresh-indicator');
+                    if (indicator) {
+                        indicator.innerHTML = `<i class="fas fa-circle text-xs mr-1 animate-pulse"></i>Auto-refresh ON (${new Date().toLocaleTimeString()})`;
+                    }
+                }
+            }, 5000); // Check every 5 seconds for more responsive monitoring
+        }
+        
+        function stopStatusRefresh() {
+            if (statusRefreshInterval) {
+                clearInterval(statusRefreshInterval);
+                statusRefreshInterval = null;
+                
+                // Update refresh indicator
+                const indicator = document.getElementById('auto-refresh-indicator');
+                if (indicator) {
+                    indicator.innerHTML = '<i class="fas fa-circle text-xs mr-1"></i>Auto-refresh OFF';
+                    indicator.className = 'text-xs text-gray-600 px-2 py-1 bg-gray-100 rounded';
+                }
+            }
+        }
+        
+        // Update switchTab function to handle real-time tab
+        const originalSwitchTab = switchTab;
+        switchTab = function(tabName) {
+            originalSwitchTab(tabName);
+            
+            if (tabName === 'realtime') {
+                checkListenerStatus();
+                refreshActivityLogs(); // Initial load of activity logs
+                startStatusRefresh();
+            } else {
+                stopStatusRefresh();
+            }
+        };
+
+        // ===================================
+        // Processing History Functions
+        // ===================================
+        
+        
+        async function refreshActivityLogs() {
+            try {
+                const response = await fetch('/api/listener/activity-logs?limit=30');
+                const result = await response.json();
+                
+                const logContainer = document.getElementById('monitoring-log');
+                
+                if (result.status === 'success' && result.activity_logs && result.activity_logs.length > 0) {
+                    // Clear existing content and update with fresh logs
+                    logContainer.innerHTML = '';
+                    
+                    // Add new log entries
+                    result.activity_logs.forEach(log => {
+                        const logEntry = document.createElement('div');
+                        const timestamp = new Date(log.timestamp).toLocaleTimeString();
+                        
+                        // Color and icon based on log level
+                        let textColor = 'text-gray-700';
+                        let icon = 'ℹ️';
+                        if (log.level === 'success') {
+                            textColor = 'text-green-700';
+                            icon = '✅';
+                        } else if (log.level === 'warning') {
+                            textColor = 'text-yellow-700';
+                            icon = '⚠️';
+                        } else if (log.level === 'error') {
+                            textColor = 'text-red-700';
+                            icon = '❌';
+                        }
+                        
+                        logEntry.className = `${textColor} mb-1 p-2 rounded border-l-4 ${log.level === 'success' ? 'border-green-400 bg-green-50' : 
+                                                                                          log.level === 'warning' ? 'border-yellow-400 bg-yellow-50' :
+                                                                                          log.level === 'error' ? 'border-red-400 bg-red-50' : 'border-gray-400 bg-gray-50'}`;
+                        logEntry.innerHTML = `
+                            <div class="flex items-start space-x-2">
+                                <span class="text-sm">${icon}</span>
+                                <div class="flex-1">
+                                    <span class="text-xs text-gray-500 font-mono">[${timestamp}]</span>
+                                    <span class="ml-2">${escapeHtml(log.message)}</span>
+                                </div>
+                            </div>
+                        `;
+                        logContainer.appendChild(logEntry);
+                    });
+                    
+                    // Show log summary at the top
+                    const summaryEntry = document.createElement('div');
+                    summaryEntry.className = 'text-xs text-gray-500 mb-2 p-2 bg-blue-50 border-l-4 border-blue-400 rounded';
+                    summaryEntry.innerHTML = `📊 Showing ${result.returned_count} of ${result.total_count} total log entries (Last updated: ${new Date().toLocaleTimeString()})`;
+                    logContainer.insertBefore(summaryEntry, logContainer.firstChild);
+                    
+                    // Scroll to top to show latest entries
+                    logContainer.scrollTop = 0;
+                } else if (result.status === 'no_logs') {
+                    // Show placeholder if no entries exist
+                    logContainer.innerHTML = '<div class="text-gray-500 text-center py-8 italic">Real-time monitoring log will appear here...</div>';
+                } else {
+                    logContainer.innerHTML = '<div class="text-gray-500 text-center py-8 italic">No activity logs available</div>';
+                }
+            } catch (error) {
+                console.error('Error fetching activity logs:', error);
+                const logContainer = document.getElementById('monitoring-log');
+                logContainer.innerHTML = '<div class="text-red-500 text-center py-8">❌ Error loading activity logs</div>';
+            }
+        }
+        
+        // Helper functions
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function formatTimestamp(timestamp) {
+            try {
+                const date = new Date(timestamp);
+                return date.toLocaleString();
+            } catch {
+                return timestamp;
+            }
+        }
+
+        // ...existing code...
+    </script>
+</body>
+</html>

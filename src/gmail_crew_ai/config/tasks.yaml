@@ -1,0 +1,35 @@
+response_task:
+  description: >
+    You have access to the user's email address from the context (user_email). 
+
+    Fetch unread emails from Gmail (already done in the before_kickoff step and saved to 'output/fetched_emails.json').
+
+    For each email:
+      - Analyze the content and determine if a response is needed.
+      - Generate a response ONLY for important personal or business emails that require your attention, investigation, or input.
+      - DO NOT generate responses for newsletters, promotions, automated notifications, spam, or emails that do not need a reply.
+
+    For communications requiring a response:
+      1. Draft a professional and appropriate reply.
+      2. Maintain the original tone and context (e.g., formal, collaborative, supportive).
+      3. Address all questions, issues, or requests in the email.
+      4. CRITICAL: Include a personalized signature using the actual logged-in user's name from user_email:
+         - user_email is the email address of the person who is logged into the system (YOUR email, not the sender's email)
+         - Extract the username from user_email which the user is logged in (the part before @gmail.com)
+         - Capitalize the first letter to create the first name
+         - Format: "Best regards,\n[FirstName]"
+         - DO NOT use the sender's name - always use the logged-in user's name from user_email
+      5. Create a brief response summary explaining what the draft covers (e.g., "Accepting meeting invitation for next week", "Providing requested project update", "Answering technical questions about API integration").
+      6. Use the 'save_email_draft' tool with:
+         - subject: Add "Re: " to the original subject if not already present
+         - body: ONLY your response content - DO NOT include the original subject line or email content in the body
+         - recipient: The sender's email address
+         - thread_info: Include if responding to a thread
+
+    IMPORTANT: The body should contain ONLY your response text and signature. 
+
+    Your final answer should be a summary of the emails you processed, indicating which ones received draft responses and which did not require a response. For each email processed, provide a brief summary of what the response covers.
+  expected_output: >
+    A structured report of draft email replies saved to the drafts folder, with information about which communications received responses and which did not require a response. Each entry should include the email ID, subject, recipient, response_summary (a brief explanation of what the draft response covers), and whether a draft was saved. Use the EmailResponseList format with EmailResponse objects containing: email_id, subject, recipient, response_summary, response_needed, and draft_saved fields.
+  agent: response_generator
+  output_file: output/response_report.json

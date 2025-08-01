@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrewAI Configuration - Gmail Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .fade-in {
+            animation: fadeIn 0.6s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card-hover:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.15);
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .form-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .config-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen gradient-bg">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-robot text-blue-600 text-2xl mr-3"></i>
+                    <h1 class="text-xl font-semibold text-gray-900">CrewAI Configuration</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-600">
+                        <i class="fas fa-user mr-1"></i>
+                        {{ user_email }}
+                    </span>
+                    <a href="/settings" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150">
+                        <i class="fas fa-cog mr-2"></i>Settings
+                    </a>
+                    <a href="/auth/logout" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <div class="fade-in">
+            <!-- Header -->
+            <div class="text-center mb-12">
+                <h1 class="text-4xl font-bold text-white mb-4">
+                    <i class="fas fa-cogs mr-3"></i>
+                    Configure AI Email Assistant
+                </h1>
+                <p class="text-xl text-gray-100 max-w-2xl mx-auto">
+                    Set up your AI crew to intelligently process and respond to your emails with customized parameters.
+                </p>
+            </div>
+
+            <!-- Configuration Form -->
+            <div class="config-card rounded-xl shadow-2xl p-8 card-hover transition-all duration-300">
+                <!-- Error Display -->
+                {% if error %}
+                <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div class="flex">
+                        <i class="fas fa-exclamation-triangle text-red-400 mr-3 mt-1"></i>
+                        <div>
+                            <h3 class="text-sm font-medium text-red-800">Configuration Error</h3>
+                            <p class="mt-1 text-sm text-red-700">{{ error }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <form method="POST" action="/crew-config/run" class="space-y-8">
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <!-- Left Column -->
+                        <div class="space-y-6">
+                            <!-- Email Processing Limit -->
+                            <div>
+                                <label for="email_limit" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-envelope mr-2 text-blue-600"></i>
+                                    Number of Emails to Process
+                                </label>
+                                <select name="email_limit" id="email_limit" required 
+                                        class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none transition-all duration-200">
+                                    <option value="5">5 emails (Quick)</option>
+                                    <option value="10" selected>10 emails (Balanced)</option>
+                                    <option value="15">15 emails (Thorough)</option>
+                                    <option value="20">20 emails (Comprehensive)</option>
+                                    <option value="30">30 emails (Full Scan)</option>
+                                </select>
+                                <p class="mt-2 text-sm text-gray-600">
+                                    Choose how many of your most recent unread emails to process
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Configuration Info -->
+                        <div class="space-y-6">
+
+                            <!-- AI Model Info -->
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <h4 class="text-sm font-semibold text-blue-800 mb-2">
+                                    <i class="fas fa-brain mr-2"></i>
+                                    Current AI Model
+                                </h4>
+                                <p class="text-sm text-blue-700">{{ model_choice }}</p>
+                                <p class="text-xs text-blue-600 mt-1">
+                                    You can change this in <a href="/settings" class="underline hover:text-blue-800">Settings</a>
+                                </p>
+                            </div>
+
+                            <!-- Processing Time Estimate -->
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                <h4 class="text-sm font-semibold text-yellow-800 mb-2">
+                                    <i class="fas fa-clock mr-2"></i>
+                                    Estimated Processing Time
+                                </h4>
+                                <p class="text-sm text-yellow-700" id="time-estimate">2-3 minutes for 10 emails</p>
+                                <p class="text-xs text-yellow-600 mt-1">
+                                    Time varies based on email complexity and AI model
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
+                        <button type="submit" 
+                                class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-4 px-8 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg">
+                            <i class="fas fa-rocket mr-3"></i>
+                            Start AI Processing
+                        </button>
+                        
+                        <a href="/dashboard" 
+                           class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-4 px-8 rounded-lg transition-all duration-200 text-center">
+                            <i class="fas fa-tachometer-alt mr-3"></i>
+                            Skip to Dashboard
+                        </a>
+                    </div>
+
+                    <!-- Info Footer -->
+                    <div class="bg-gray-50 rounded-lg p-4 text-center">
+                        <p class="text-sm text-gray-600">
+                            <i class="fas fa-info-circle mr-2 text-blue-500"></i>
+                            Your emails will be processed intelligently using AI. You can review and edit responses before they're sent.
+                        </p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for dynamic updates -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const emailLimitSelect = document.getElementById('email_limit');
+            const timeEstimate = document.getElementById('time-estimate');
+            
+            // Time estimation based on email count
+            const timeEstimates = {
+                5: '1-2 minutes for 5 emails',
+                10: '2-3 minutes for 10 emails',
+                15: '3-4 minutes for 15 emails',
+                20: '4-6 minutes for 20 emails',
+                30: '6-8 minutes for 30 emails'
+            };
+            
+            emailLimitSelect.addEventListener('change', function() {
+                const selectedCount = this.value;
+                timeEstimate.textContent = timeEstimates[selectedCount] || '2-3 minutes for 10 emails';
+            });
+            
+            // Form validation and submission
+            const form = document.querySelector('form');
+            form.addEventListener('submit', function(e) {
+                const submitButton = form.querySelector('button[type="submit"]');
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-3"></i>Processing...';
+                submitButton.disabled = true;
+            });
+        });
+    </script>
+</body>
+</html>
